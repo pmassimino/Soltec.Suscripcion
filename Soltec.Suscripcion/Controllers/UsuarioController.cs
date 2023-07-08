@@ -3,15 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Soltec.Suscripcion.Model;
 using Soltec.Suscripcion.Service;
 using System.Text;
-using System.Security.Cryptography;
-using Microsoft.VisualBasic;
-using Microsoft.AspNetCore.Mvc.Routing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using Soltec.Suscripcion.Code;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Soltec.Suscripcion.Controllers
 {
@@ -24,8 +23,9 @@ namespace Soltec.Suscripcion.Controllers
         private IGenericRepository<Model.Suscripcion> suscripcionRepositoty = null;
         private IConfiguration config;
         private ISujetoService sujetoService;
+        private ISessionService sessionService;
 
-        public UsuarioController(IConfiguration config,ISujetoService sujetoService, IConfiguration configuration)
+        public UsuarioController(IConfiguration config,ISujetoService sujetoService, IConfiguration configuration,ISessionService sessionService)
         {
             this.repository = new GenericRepository<Usuario>();
             this.repositoryTicket = new GenericRepository<TicketValidacion>();
@@ -36,17 +36,18 @@ namespace Soltec.Suscripcion.Controllers
             this.sujetoService.baseUrl = configuration["Soltec.Sae.Api:UrlService"].ToString();
             this.sujetoService.ApiKey = configuration["Soltec.Sae.Api:ApiKey"].ToString();
             this.config = config;
+            this.sessionService = sessionService;
         }
         [HttpPost]
         [Route("api/login")]
         [AllowAnonymous]
         public IActionResult Login([FromBody] FormUsuario form)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             var result = this.ValidarLogin(form.Nombre, form.Password);
             if (result == false)
             {
-                errorValidacion.Add("usuario", "usuario o contraseña incorrecto");               
+                errorValidacion.Add(new string[] { "usuario", "usuario o contraseña incorrecto" });               
                 var json = JsonConvert.SerializeObject(errorValidacion);
                 //response.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
                 //return response;
@@ -88,30 +89,30 @@ namespace Soltec.Suscripcion.Controllers
         [Route("api/[controller]")]
         public IActionResult Add([FromBody] FormUsuario form)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             if (string.IsNullOrEmpty(form.Nombre))
             {
-                errorValidacion.Add("Nombre", "Ingrese un nombre válido");
+                errorValidacion.Add(new string[]{ "Nombre", "Ingrese un nombre válido"});
             }
             if (string.IsNullOrEmpty(form.email))
             {
-                errorValidacion.Add("Nombre", "Ingrese un nombre válido");
+                errorValidacion.Add(new string[] { "Nombre", "Ingrese un nombre válido" });
             }
             if (string.IsNullOrEmpty(form.Password))
             {
-                errorValidacion.Add("Nombre", "Ingrese un nombre válido");
+                errorValidacion.Add(new string[] { "Nombre", "Ingrese un nombre válido" });
             }
             //Validar nombre
             var tmpResult = this.GetByName(form.Nombre);
             if (tmpResult != null) 
             {               
-                errorValidacion.Add("Nombre", "Usuario ya registrado");
+                errorValidacion.Add(new string[] { "Nombre", "Usuario ya registrado" });
             }
             //Valiodar nombre
             var existeMail = repository.GetAll().Where(w=>w.Email.ToLower().Trim()==form.email.ToLower().Trim()).ToList().Count > 0;
             if (existeMail)
             {
-                errorValidacion.Add("email", "email ya registrado");
+                errorValidacion.Add(new string[] { "email", "email ya registrado" });
             }
             if (errorValidacion.Count > 0)
             {
@@ -176,26 +177,43 @@ namespace Soltec.Suscripcion.Controllers
             }
             return Ok(form);
         }
+        [Authorize(Roles = "Admin")]
         [HttpDelete()]        
         [Route("api/[controller]/{id}")]
         public IActionResult Delete(int id) 
         {
-            var tmpUsuario = this.repository.GetById(id);
+            //Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();            
+            var tmpUsuario = this.repository.GetAll().Include(c=>c.Cuentas).Where(w=>w.Id==id).FirstOrDefault();
             if (tmpUsuario == null) 
             {
                 return NotFound();
             }
+
             if (tmpUsuario != null)
-            {  if (tmpUsuario.Cuentas.Count != 0)
+            {
+                if (tmpUsuario.Cuentas.Count != 0)
                 {
-                    var tieneSus = this.suscripcionRepositoty.GetAll().Where(w => tmpUsuario.Cuentas != null && tmpUsuario.Cuentas.Any(c => c.IdCuenta == w.IdCuenta)).Count();
-                    if (tieneSus > 0)
+                    foreach (var c in tmpUsuario.Cuentas)
                     {
-                        return BadRequest("Tiene Suscripciones activas");
+                        var tieneSus = this.suscripcionRepositoty.GetAll().Where(w => w.IdCuenta == c.IdCuenta).Count();
+                        if (tieneSus > 0)
+                        {
+                            errorValidacion.Add(new string[] { "Usuario", "Tiene suscripciones Activas, no se puede eliminar" });
+                        }
                     }
                 }
             }
-                
+            //Verificar si no es el actual usuario
+            if (id == this.sessionService.IdUsuario) 
+            {
+                errorValidacion.Add(new string[] { "Id", "No puede borrar el usuario  su propio usuario" });
+            }
+
+            if (errorValidacion.Count > 0)
+            {
+                return BadRequest(errorValidacion);
+            }
             this.repository.Delete(tmpUsuario.Id);
             this.repository.Save();
             return Ok();
@@ -268,34 +286,57 @@ namespace Soltec.Suscripcion.Controllers
             var result = repository.GetAll().Include(i=>i.Roles).Include(c=>c.Cuentas).Select(s => new UsuarioDto { Id = s.Id, Nombre = s.Nombre, Email = s.Email,Estado = s.Estado, Roles = s.Roles.ToList(),Cuentas=s.Cuentas.ToList() });
             return Ok(result);
         }
+        [Authorize(Roles = "Admin")]
+        [HttpGet()]
+        [Route("api/[controller]/{id}")]
+        public IActionResult GetOne(int id)
+        {
+            var result = repository.GetAll().Where(w=>w.Id==id).Include(i => i.Roles).Include(c => c.Cuentas).Select(s => new UsuarioDto { Id = s.Id, Nombre = s.Nombre, Email = s.Email, Estado = s.Estado, Roles = s.Roles.ToList(), Cuentas = s.Cuentas.ToList() }).FirstOrDefault();
+            return Ok(result);
+        }
+        [Route("api/[controller]/{id}/cuentas")]
+        public IActionResult ListCuentas(int id)
+        {
+            var tmpResult = repository.GetAll().Include(i => i.Roles).Include(c => c.Cuentas).Where(w=>w.Id==id).FirstOrDefault();
+            var result = tmpResult?.Cuentas?.ToList().Select(s => new { IdUsuario = s.IdUsuario, IdCuenta = s.IdCuenta,Nombre = "" }).ToList();
+            var updatedResult = result?.Select(item =>
+            {
+                var cuenta = sujetoService.FindOne(item.IdCuenta);
+                var nombre = cuenta != null ? cuenta.Nombre : "Nombre no encontrado";
+                return new { item.IdUsuario, item.IdCuenta, Nombre = nombre };
+            }).ToList();
+            return Ok(updatedResult);
+        }
 
         [Route("api/[controller]/{Id}/addCuenta")]
         [HttpPut]
         [Authorize(Roles = "Admin")]
         public IActionResult AddCuenta(int id,[FromBody] UsuarioCuenta cuenta)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             var entity = repository.GetAll().Include(i=>i.Cuentas).Where(w => w.Id == id).FirstOrDefault();
             if (entity == null)
             {
-                errorValidacion.Add("Usuario", "No existe un usuario con esos parámetros");
+                errorValidacion.Add(new string[] { "Usuario", "No existe un usuario con esos parámetros" });
             }
-            var sujeto = sujetoService.FindOne(cuenta.IdCuenta);
+            var sujeto = sujetoService.FindOne(cuenta?.IdCuenta);
             if (sujeto == null)
             {
-                errorValidacion.Add("Usuario", "No existe una cuenta con esos parámetros");
+                errorValidacion.Add(new string[] { "Usuario", "No existe una cuenta con esos parámetros" });
             }
-            if (entity?.Cuentas?.Any(c => c.IdCuenta == cuenta.IdCuenta) == true)
+            if (entity?.Cuentas?.Any(c => c.IdCuenta == cuenta?.IdCuenta) == true)
             {
-                errorValidacion.Add("Usuario", "Cuenta ya esta agregada");
+                errorValidacion.Add(new string[] { "Usuario", "Cuenta ya esta agregada" });
             }
             if (errorValidacion.Count > 0)
             {
                 return BadRequest(errorValidacion);
             }
-            entity.Cuentas.Add(new UsuarioCuenta { IdCuenta = cuenta.IdCuenta,IdUsuario=id});
+            UsuarioCuenta newEntity = new UsuarioCuenta { IdCuenta = cuenta.IdCuenta, IdUsuario = id };
+            entity.Cuentas.Add(newEntity);
             repository.Update(entity);
             repository.Save();
+            
             return Ok();
         }
         [Route("api/[controller]/{Id}/delCuenta")]
@@ -303,15 +344,15 @@ namespace Soltec.Suscripcion.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult DelCuenta(int id, [FromBody] UsuarioCuenta cuenta)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             var entity = repository.GetAll().Include(i => i.Cuentas).Where(w => w.Id == id).FirstOrDefault();
             if (entity == null)
             {
-                errorValidacion.Add("Usuario", "No existe un usuario con esos parámetros");
+                errorValidacion.Add(new string[] { "Usuario", "No existe un usuario con esos parámetros" });
             }
             if (entity?.Cuentas?.Any(entity => entity.IdCuenta == cuenta.IdCuenta) == false) 
             {
-                errorValidacion.Add("Usuario", "No existe una cuenta con esos parámetros");
+                errorValidacion.Add(new string[] { "Usuario", "No existe una cuenta con esos parámetros" });
             }
             if (errorValidacion.Count > 0)
             {

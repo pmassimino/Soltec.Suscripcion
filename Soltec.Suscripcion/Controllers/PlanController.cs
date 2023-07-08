@@ -39,10 +39,10 @@ namespace Soltec.Suscripcion.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Add([FromBody] Plan item)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             if (string.IsNullOrEmpty(item.Nombre))
             {
-                errorValidacion.Add("Nombre", "Ingrese un nombre válido");
+                errorValidacion.Add(new string[] { "Nombre", "Ingrese un nombre válido" });
             }
             if (errorValidacion.Count > 0)
             {
@@ -57,16 +57,16 @@ namespace Soltec.Suscripcion.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult Edit(int id,[FromBody] Plan item)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>(); ;
             var entity = repository.GetAll().Where(w => w.Id == item.Id).FirstOrDefault();
             if (entity == null)
             {
-                errorValidacion.Add("Plan", "No existe un plan con esos parámetros");
+                errorValidacion.Add(new string[] { "Plan", "No existe un plan con esos parámetros" });
             }
           
             if (string.IsNullOrEmpty(item.Nombre))
             {
-                errorValidacion.Add("Nombre", "Ingrese un nombre válido");
+                errorValidacion.Add(new string[] { "Nombre", "Ingrese un nombre válido" });
             }
             if (errorValidacion.Count > 0)
             {
@@ -82,18 +82,18 @@ namespace Soltec.Suscripcion.Controllers
         [Authorize(Roles = "Admin")]
         public ActionResult<Plan> Delete(int Id)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             var result = repository.GetById(Id);
             if (result == null)
             {
-                errorValidacion.Add("Plan", "Plan no existe");
+                errorValidacion.Add(new string[] { "Plan", "Plan no existe" });
             }
             if (result != null)
             {
                 var tieneSus = this.suscripcionRepository.GetAll().Where(w => w.IdPlan == Id).Count();
                 if (tieneSus > 0)
                 {
-                    errorValidacion.Add("Plan", "El plan esta asociado a algúna suscripcion, no se puede eliminar");
+                    errorValidacion.Add(new string[] { "Plan", "El plan esta asociado a algúna suscripcion, no se puede eliminar" });
                 }
             }
                 if (errorValidacion.Count > 0)

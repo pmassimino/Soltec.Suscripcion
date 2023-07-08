@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Soltec.Suscripcion.Code;
+using Soltec.Suscripcion.Data;
 using Soltec.Suscripcion.Service;
 using System.Net.Http.Headers;
 using System.Text;
@@ -15,6 +16,9 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+//builder.Services.AddDbContext<SuscripcionContext>();
+
+
 builder.Services.AddTransient<ICommonService,CommonService>();
 builder.Services.AddTransient<ICtaCteService, CtaCteService>();
 builder.Services.AddTransient<ISujetoService, SujetoService>();
@@ -62,6 +66,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandler("/Error");
+app.UseDeveloperExceptionPage();
 
 app.UseHttpsRedirection();
 

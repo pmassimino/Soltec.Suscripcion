@@ -13,15 +13,18 @@ namespace Soltec.Suscripcion.Data
         public DbSet<Plan> Plan { get; set; }
         public DbSet<TicketValidacion> TicketValidacion { get; set; }        
         public DbSet<Model.Suscripcion> Suscripcion { get; set; }
-        
+        IConfiguration configuration;
+
+
         public string DbPath { get; }
 
         public SuscripcionContext()
         {
-            //var folder = Environment.SpecialFolder.LocalApplicationData;
-            // var folder = Environment.SpecialFolder.LocalApplicationData;
-            // var path = Environment.GetFolderPath(folder);
-            // DbPath = System.IO.Path.Join(path, "Suscripcion.db");
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder()
+               .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+            this.configuration = configurationBuilder.Build();
+            this.DbPath = configuration["DatabasePath"] + "\\Suscripcion.db";
         }
 
         // The following configures EF to create a Sqlite database file in the
@@ -30,7 +33,8 @@ namespace Soltec.Suscripcion.Data
         //    => options.UseSqlite($"Data Source={DbPath}");
         // }
         protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite($"Data Source=Suscripcion.db");
+            //=> options.UseSqlite($"Data Source={DbPath}");
+            => options.UseSqlServer(this.configuration.GetConnectionString("DefaultConnection"));
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 

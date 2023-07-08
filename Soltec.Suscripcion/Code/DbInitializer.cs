@@ -1,4 +1,5 @@
-﻿using Soltec.Suscripcion.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using Soltec.Suscripcion.Data;
 using Soltec.Suscripcion.Model;
 
 namespace Soltec.Suscripcion.Code
@@ -7,11 +8,12 @@ namespace Soltec.Suscripcion.Code
     {
         public static void Seed(SuscripcionContext context)
         {
+            // context.Database.EnsureCreated();
             //Plan
             if (!context.Rol.Any())
             {                
                 List<Plan> list = new List<Plan>();
-                Plan item = new Plan() { Id = 1, Nombre = "Plan Abono General" };
+                Plan item = new Plan() { Nombre = "Plan Abono General" };
                 list.Add(item);               
                 context.Plan.AddRange(list);
                 context.SaveChanges();
@@ -20,9 +22,9 @@ namespace Soltec.Suscripcion.Code
             if (!context.Rol.Any())
             {             
                 List<Rol> list = new List<Rol>();
-                Rol item = new Rol() { Id=1,Nombre = "Admin"};
+                Rol item = new Rol() { Nombre = "Admin"};
                 list.Add(item);
-                item = new Rol() { Id = 2, Nombre = "User" };
+                item = new Rol() { Nombre = "User" };
                 list.Add(item);
                 context.Rol.AddRange(list);
                 context.SaveChanges();                
@@ -34,7 +36,7 @@ namespace Soltec.Suscripcion.Code
                 string salt = SecurityHelper.CreateSalt(10);
                 string passwordHash = SecurityHelper.CreatePasswordHash(password, salt);
                 var roles = context.Rol.ToList();                                
-                Usuario tmpUsuario = new Usuario() { Id = 1, Nombre = "admin", Password = passwordHash, Salt = salt, Email = "pmassimino@hotmail.com", Estado = "ACTIVO"};
+                Usuario tmpUsuario = new Usuario() {  Nombre = "admin", Password = passwordHash, Salt = salt, Email = "pmassimino@hotmail.com", Estado = "ACTIVO"};
                 tmpUsuario.Roles.Add(new UsuarioRol { IdUsuario = 1, IdRol = 1 });
                 tmpUsuario.Roles.Add(new UsuarioRol { IdUsuario = 1, IdRol = 2 });
                 context.Usuario.AddRange(tmpUsuario);
@@ -44,7 +46,7 @@ namespace Soltec.Suscripcion.Code
                 salt = SecurityHelper.CreateSalt(10);
                 passwordHash = SecurityHelper.CreatePasswordHash(password, salt);
                 
-                tmpUsuario = new Usuario() { Id = 2, Nombre = "usuario", Password = passwordHash, Salt = salt, Email = "pablo.soltec@gmail.com", Estado = "ACTIVO" };
+                tmpUsuario = new Usuario() { Nombre = "usuario", Password = passwordHash, Salt = salt, Email = "pablo.soltec@gmail.com", Estado = "ACTIVO" };
                 tmpUsuario.Roles.Add(new UsuarioRol { IdUsuario = 2, IdRol = 2 });
                 tmpUsuario.Cuentas.Add(new UsuarioCuenta { IdUsuario = 2, IdCuenta = "00001" });
                 context.Usuario.AddRange(tmpUsuario);

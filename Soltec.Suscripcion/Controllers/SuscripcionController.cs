@@ -15,20 +15,22 @@ namespace Soltec.Suscripcion.Controllers
 
         ICommonService commonService;
         ICtaCteService ctaCteService;
-
         private readonly ILogger<WeatherForecastController> _logger;
         private IGenericRepository<Model.Suscripcion> repository = null;
         private IGenericRepository<Model.Usuario> usuarioRepository;
         private IGenericRepository<Model.Plan> planRepository = null;
         private ISujetoService sujetoService;
-        private ISessionService sessionService;
+        private ISessionService sessionService;          
         private readonly IMemoryCache cache;
+        IConfiguration configuration;
+        private IWebHostEnvironment hostingEnvironment;
 
 
-        public SuscripcionController(ILogger<WeatherForecastController> logger, ICommonService commonService, IConfiguration configuration, ICtaCteService ctaCteService, ISujetoService sujetoService,ISessionService sessionService, IMemoryCache memoryCache)
+        public SuscripcionController(ILogger<WeatherForecastController> logger, ICommonService commonService, IConfiguration configuration, ICtaCteService ctaCteService, ISujetoService sujetoService,ISessionService sessionService, IMemoryCache memoryCache, IWebHostEnvironment environment)
         {
             _logger = logger;
             this.commonService = commonService;
+            this.configuration = configuration;
             this.commonService.baseUrl = configuration["Soltec.Sae.Api:UrlService"].ToString();
             this.commonService.ApiKey = configuration["Soltec.Sae.Api:ApiKey"].ToString();
             this.ctaCteService = ctaCteService;
@@ -41,26 +43,31 @@ namespace Soltec.Suscripcion.Controllers
             this.planRepository = new GenericRepository<Model.Plan>();
             this.usuarioRepository = new GenericRepository<Model.Usuario>();
             this.sessionService = sessionService;
+            this.hostingEnvironment = environment;
             this.cache = memoryCache;
         }
-        [Authorize(Roles = "Admin",AuthenticationSchemes ="role")]
+        [Authorize(Roles = "Admin")]
         public IActionResult Add([FromBody] Model.Suscripcion item)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();           
+            List<string[]> errorValidacion = new List<string[]>();
             var sujeto = sujetoService.FindOne(item.IdCuenta);
             if (sujeto == null) 
             {
-                errorValidacion.Add("Sujeto", "Ingrese un cliente válido");
+                errorValidacion.Add(new string[] { "Sujeto", "Ingrese un cliente válido" });
             }
             var plan = planRepository.GetById(item.IdPlan);
             if (plan == null)
             {
-                errorValidacion.Add("Plan", "Ingrese un plan válido");
+                errorValidacion.Add(new string[] { "Plan", "Ingrese un plan válido" });
             }
            var suscripcion = repository.GetAll().Where(w=>w.IdCuenta==item.IdCuenta  && w.IdPlan == item.IdPlan).FirstOrDefault();
             if (suscripcion != null) 
             {
-                errorValidacion.Add("Suscripcion", "Ya existe una suscripcion con esos parámetros");
+                errorValidacion.Add(new string[] { "Suscripcion", "Ya existe una suscripcion con esos parámetros" });
+            }
+            if (item.Importe < 0)
+            {
+                errorValidacion.Add(new string[] { "Importe", "Importe debe ser mayor a cero" });
             }
             if (errorValidacion.Count > 0)
             {
@@ -74,30 +81,34 @@ namespace Soltec.Suscripcion.Controllers
         [HttpPut("{Id}")]
         public IActionResult Edit(int id,[FromBody] Model.Suscripcion item)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             var sujeto = sujetoService.FindOne(item.IdCuenta);
             if (sujeto == null)
             {
-                errorValidacion.Add("Sujeto", "Ingrese un cliente válido");
+                errorValidacion.Add(new string[] { "Sujeto", "Ingrese un cliente válido" });
             }
             var plan = planRepository.GetById(item.IdPlan);
             if (plan == null)
             {
-                errorValidacion.Add("Plan", "Ingrese un plan válido");
+                errorValidacion.Add(new string[] { "Plan", "Ingrese un plan válido" });
             }         
             var entity = repository.GetAll().Where(w => w.Id == item.Id).FirstOrDefault();
             if (entity == null)
             {
-                errorValidacion.Add("Suscripcion", "No existe una suscripcion con esos parámetros");
+                errorValidacion.Add(new string[] { "Suscripcion", "No existe una suscripcion con esos parámetros" });
             }
             var suscripcion = repository.GetAll().Where(w => w.IdCuenta == item.IdCuenta && w.IdPlan == item.IdPlan && w.Id !=id).FirstOrDefault();
             if (suscripcion != null)
             {
-                errorValidacion.Add("Suscripcion", "Ya existe una suscripcion con esos parámetros");
+                errorValidacion.Add(new string[] { "Suscripcion", "Ya existe una suscripcion con esos parámetros" });
             }
-            if (new string[]{ "ACTIVO", "SUSPENDIDO"}.Contains(item.Estado) == false)
+            if (new string[]{ "ACTIVO","AVISO", "SUSPENDIDO"}.Contains(item.Estado) == false)
             {
-                errorValidacion.Add("Estado", "Estado no válido");
+                errorValidacion.Add(new string[] { "Estado", "Estado no válido" });
+            }
+            if (item.Importe < 0)
+            {
+                errorValidacion.Add(new string[] { "Importe", "Importe debe ser mayor a cero" });
             }
             if (errorValidacion.Count > 0)
             {
@@ -117,11 +128,11 @@ namespace Soltec.Suscripcion.Controllers
         [Authorize(Roles = "Admin")]
         public ActionResult<Model.Suscripcion> Delete(int Id)
         {
-            Dictionary<string, string> errorValidacion = new Dictionary<string, string>();
+            List<string[]> errorValidacion = new List<string[]>();
             var result = repository.GetById(Id);
             if (result == null)
             {
-                errorValidacion.Add("Plan", "Plan no existe");
+                errorValidacion.Add(new string[] { "Plan", "Plan no existe" });
             }            
             if (errorValidacion.Count > 0)
             {
@@ -139,6 +150,7 @@ namespace Soltec.Suscripcion.Controllers
             var model = repository.GetAll();
             return Ok(model);
         }
+        
         [HttpGet]
         [Route("view")]
         [Authorize(Roles = "Admin")]
@@ -187,6 +199,41 @@ namespace Soltec.Suscripcion.Controllers
                 result.Estado = tmpSuscripcion.Estado;
             }
             return Ok(result);
+        }
+        [HttpGet]
+        [Route("resumenCtaCte")]
+        public IActionResult ResumenCtaCte()
+        {
+            int idUsuario = sessionService.IdUsuario;
+            var usuario = this.usuarioRepository.GetAll().Include(i => i.Roles).Include(c => c.Cuentas).Where(w => w.Id == idUsuario).FirstOrDefault();
+            if (usuario.Cuentas.Count() == 0)
+            {
+                return BadRequest("El usuario no tiene cuentas asignadas");
+            }
+            var tmpSuscripcion = repository.GetAll().ToList().Where(s => usuario.Cuentas.Any(c => c.IdCuenta == s.IdCuenta)).FirstOrDefault();
+            
+            if (tmpSuscripcion == null)
+            {
+                return BadRequest("No tiene suscripcion activas");
+            }
+            string idCuentaMayor = this.configuration["IdCuentaMayor"].ToString();
+            string idCuenta = tmpSuscripcion.IdCuenta;
+            DateTime fecha = DateTime.Now.AddDays(-60);
+            DateTime fechaHasta = DateTime.Now;
+            var movCtaCte = ctaCteService.List(idCuenta,idCuentaMayor,fecha,fechaHasta);
+            var sujeto = this.sujetoService.FindOne(idCuenta);
+            CtaCteReportTemplate template = new CtaCteReportTemplate();
+            template.FechaDesde = fecha;
+            template.FechaHasta = fechaHasta;
+            template.Sujeto = sujeto;
+            template.MovCtaCte = movCtaCte;
+            template.NombreEmpresa = "Soltec S.A.S";
+            template.Path = hostingEnvironment.ContentRootPath ;
+            var result = template.ListPDF();
+            return new FileStreamResult(result, "application/pdf") { FileDownloadName = "ResumenCtaCte.pdf" };
+
+
+            //return Ok(result);
         }
         public class EstadoSuscripcion 
         {
