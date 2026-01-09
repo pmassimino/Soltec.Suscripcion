@@ -113,3 +113,11 @@ C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\bin\Debug\net6.0\Microsoft.Ow
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\bin\Debug\net6.0\Microsoft.Owin.Security.OAuth.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\bin\Debug\net6.0\BouncyCastle.Crypto.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\bin\Debug\net6.0\itextsharp.dll
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\bin\Debug\net6.0\Microsoft.Owin.dll
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\bin\Debug\net6.0\Microsoft.Owin.Security.dll
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\bin\Debug\net6.0\Owin.dll
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Debug\net6.0\staticwebassets\msbuild.Soltec.Suscripcion.Microsoft.AspNetCore.StaticWebAssets.props
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Debug\net6.0\staticwebassets\msbuild.build.Soltec.Suscripcion.props
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Debug\net6.0\staticwebassets\msbuild.buildMultiTargeting.Soltec.Suscripcion.props
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Debug\net6.0\staticwebassets\msbuild.buildTransitive.Soltec.Suscripcion.props
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Debug\net6.0\staticwebassets.pack.json

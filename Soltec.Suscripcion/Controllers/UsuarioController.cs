@@ -177,6 +177,75 @@ namespace Soltec.Suscripcion.Controllers
             }
             return Ok(form);
         }
+        [HttpPut] // Cambiamos a HttpPut para operaciones de actualización
+        [Route("api/[controller]/{id}")] // Aceptamos un parámetro de ruta para el ID del usuario
+        public IActionResult Update(int id, [FromBody] FormUsuario form)
+        {
+            List<string[]> errorValidacion = new List<string[]>();
+
+            // Validaciones básicas
+            if (string.IsNullOrEmpty(form.Nombre))
+            {
+                errorValidacion.Add(new string[] { "Nombre", "Ingrese un nombre válido" });
+            }
+            if (string.IsNullOrEmpty(form.email))
+            {
+                errorValidacion.Add(new string[] { "email", "Ingrese un email válido" }); // Corregí el nombre del campo aquí
+            }
+
+            // Obtener el usuario existente
+            var existingUser = repository.GetById(id);
+            if (existingUser == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            // Validar que el nombre no esté en uso por otro usuario
+            var tmpResult = this.GetByName(form.Nombre);
+            if (tmpResult != null && tmpResult.Id != id)
+            {
+                errorValidacion.Add(new string[] { "Nombre", "Nombre de usuario ya está en uso" });
+            }
+
+            // Validar que el email no esté en uso por otro usuario
+            var existeMail = repository.GetAll()
+                                      .Where(w => w.Email.ToLower().Trim() == form.email.ToLower().Trim() &&
+                                                 w.Id != id)
+                                      .Any();
+            if (existeMail)
+            {
+                errorValidacion.Add(new string[] { "email", "Email ya está registrado" });
+            }
+
+            if (errorValidacion.Count > 0)
+            {
+                return BadRequest(errorValidacion);
+            }
+
+            // Actualizar los datos del usuario
+            existingUser.Nombre = form.Nombre;
+            existingUser.Email = form.email;
+            existingUser.Estado = form.Estado;
+
+            // Solo actualizar la contraseña si se proporcionó una nueva
+            if (!string.IsNullOrEmpty(form.Password))
+            {
+                string salt = SecurityHelper.CreateSalt(10);
+                existingUser.Salt = salt;
+                existingUser.Password = SecurityHelper.CreatePasswordHash(form.Password, salt);
+            }
+
+            repository.Update(existingUser);
+            repository.Save();
+
+            return Ok(new
+            {
+                Id = existingUser.Id,
+                Nombre = existingUser.Nombre,
+                Email = existingUser.Email,
+                Message = "Usuario actualizado correctamente"
+            });
+        }
         [Authorize(Roles = "Admin")]
         [HttpDelete()]        
         [Route("api/[controller]/{id}")]
@@ -388,6 +457,7 @@ namespace Soltec.Suscripcion.Controllers
         public string Nombre { get; set; }
         public string email { get; set; }
         public string Password { get;set;}
+        public string Estado { get; set; }
     }
     public class UsuarioDto
     {

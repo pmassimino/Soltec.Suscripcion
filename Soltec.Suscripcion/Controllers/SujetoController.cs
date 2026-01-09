@@ -40,7 +40,7 @@ namespace Soltec.Suscripcion.Controllers
                 model = service.List().OrderBy(o => o.Nombre).ToList();
 
                 // Almacenar en caché el valor obtenido con un tiempo de expiración de 10 minutos
-                cache.Set("tmpSujetos", model, TimeSpan.FromMinutes(10));
+                cache.Set("tmpSujetos", model, TimeSpan.FromMinutes(1));
             }
            
             return Ok(model);

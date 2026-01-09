@@ -36,11 +36,14 @@ C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.IdentityModel.Tokens.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.OpenApi.dll
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.Owin.dll
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.Owin.Security.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.Owin.Security.Google.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.Owin.Security.OAuth.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.SqlServer.Server.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Microsoft.Win32.SystemEvents.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Newtonsoft.Json.dll
+C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\Owin.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\SQLitePCLRaw.batteries_v2.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\SQLitePCLRaw.core.dll
 C:\Proyectos\Soltec.Suscripcion\Soltec.Suscripcion\obj\Release\net6.0\PubTmp\Out\SQLitePCLRaw.provider.e_sqlite3.dll

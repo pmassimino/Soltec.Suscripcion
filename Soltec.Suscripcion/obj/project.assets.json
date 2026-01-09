@@ -4991,8 +4991,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\pmass\\.nuget\\packages\\": {},
-    "C:\\Microsoft\\Xamarin\\NuGet\\": {}
+    "C:\\Users\\pmass\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
@@ -5003,13 +5002,9 @@
       "packagesPath": "C:\\Users\\pmass\\.nuget\\packages\\",
       "outputPath": "C:\\Proyectos\\Soltec.Suscripcion\\Soltec.Suscripcion\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Microsoft\\Xamarin\\NuGet\\"
-      ],
       "configFilePaths": [
         "C:\\Users\\pmass\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Xamarin.Offline.config"
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net6.0"
